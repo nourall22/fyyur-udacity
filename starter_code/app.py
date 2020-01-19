@@ -159,8 +159,8 @@ def show_venue(venue_id):
       "image_link": venue.image_link,
       "past_shows": past_shows(shows),
       "upcoming_shows": upcoming_shows(shows),
-      "past_shows_count": past_shows(shows),
-      "upcoming_shows_count": upcoming_shows(shows)
+      "past_shows_count": len(past_shows(shows)),
+      "upcoming_shows_count": len(upcoming_shows(shows))
   }
   return render_template('pages/show_venue.html', venue=data)
 
