@@ -26,8 +26,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] =False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-# TODO: connect to a local postgresql database
-
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
@@ -49,8 +47,6 @@ class Venue(db.Model):
     seeking_description = db.Column(db.String)
     shows = db.relationship('Show', backref='venue', lazy=True)
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
 class Artist(db.Model):
     __tablename__ = 'Artist'
 
@@ -66,9 +62,6 @@ class Artist(db.Model):
     seeking_description = db.Column(db.String)
     shows = db.relationship('Show', backref='artist', lazy=True)
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 class Show(db.Model):
     __tablename__ = 'Show'
 
@@ -203,17 +196,11 @@ def delete_venue(venue_id):
 #  ----------------------------------------------------------------
 @app.route('/artists')
 def artists():
-  # TODO: replace with real data returned from querying the database
-  data=[{
-    "id": 4,
-    "name": "Guns N Petals",
-  }, {
-    "id": 5,
-    "name": "Matt Quevedo",
-  }, {
-    "id": 6,
-    "name": "The Wild Sax Band",
-  }]
+  data = []
+  artists = db.session.query(Artist.id, Artist.name).all()
+  for artist in artists:
+      artist = dict(zip(('id', 'name'), artist))
+      data.append(artist)
   return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
