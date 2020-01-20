@@ -42,8 +42,8 @@ class Venue(db.Model):
     phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-    genres_list = db.Column(db.ARRAY(db.String), nullable=False)
-    website_url = db.Column(db.String(120))
+    genres = db.Column(db.ARRAY(db.String), nullable=False)
+    website = db.Column(db.String(120))
     seeking_talent = db.Column(db.Boolean, default=False)
     seeking_description = db.Column(db.String)
     shows = db.relationship('Show', backref='venue', lazy=True)
@@ -115,8 +115,8 @@ def venues():
           shows = Show.query.filter_by(venue_id=venue_data.id).all()
           venues_data = {
               'id': venue_data.id,
-              'name': venue_data.name,
-              'num_upcoming_shows': len(upcoming_shows(shows))
+              'name': venue_data.name
+              #'num_upcoming_shows': len(upcoming_shows(shows))
           }
           venue['venues'].append(venues_data)
       data.append(venue)
@@ -192,9 +192,9 @@ def create_venue_submission():
         state=form.state.data,
         address=form.address.data,
         phone=form.phone.data,
-        genres_list=form.genres_list.data,
+        genres=form.genres.data,
         facebook_link=form.facebook_link.data,
-        website_url=form.website_url.data,
+        website=form.website.data,
         image_link=form.image_link.data,
         seeking_talent=form.seeking_talent.data,
         seeking_description=form.seeking_description.data,
