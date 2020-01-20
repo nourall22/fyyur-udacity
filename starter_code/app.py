@@ -21,14 +21,15 @@ from config import *
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
-app.config["SQLALCHEMY_DATABASE_URI"] =SQLALCHEMY_DATABASE_URI
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] =False
+app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
+
 
 class Venue(db.Model):
     __tablename__ = 'Venue'
@@ -47,6 +48,7 @@ class Venue(db.Model):
     seeking_description = db.Column(db.String)
     shows = db.relationship('Show', backref='venue', lazy=True)
 
+
 class Artist(db.Model):
     __tablename__ = 'Artist'
 
@@ -62,31 +64,36 @@ class Artist(db.Model):
     seeking_description = db.Column(db.String)
     shows = db.relationship('Show', backref='artist', lazy=True)
 
+
 class Show(db.Model):
     __tablename__ = 'Show'
 
     id = db.Column(db.Integer, primary_key=True)
     venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable=False)
-    artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable=False)
+    artist_id = db.Column(db.Integer, db.ForeignKey(
+        'Artist.id'), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
 
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
 
+
 def format_datetime(value, format='medium'):
   date = dateutil.parser.parse(value)
   if format == 'full':
-      format="EEEE MMMM, d, y 'at' h:mma"
+      format = "EEEE MMMM, d, y 'at' h:mma"
   elif format == 'medium':
-      format="EE MM, dd, y h:mma"
+      format = "EE MM, dd, y h:mma"
   return babel.dates.format_datetime(date, format)
+
 
 app.jinja_env.filters['datetime'] = format_datetime
 
 #----------------------------------------------------------------------------#
 # Controllers.
 #----------------------------------------------------------------------------#
+
 
 @app.route('/')
 def index():
@@ -100,7 +107,7 @@ def index():
 def venues():
   areas = db.session.query(Venue.city, Venue.state).distinct()
 
-  data =  []
+  data = []
   for venue in areas:
       venue = dict(zip(('city', 'state'), venue))
       venue['venues'] = []
@@ -115,12 +122,13 @@ def venues():
       data.append(venue)
   return render_template('pages/venues.html', areas=data);
 
+
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
   response = {
         "data": []
   }
-  
+
   venues = db.session.query(Venue.name, Venue.id).all()
   for venue in venues:
       name = venue[0]
@@ -130,10 +138,11 @@ def search_venues():
           venue = dict(zip(('name', 'id'), venue))
           venue['num_upcoming_shows'] = len(upcoming_shows(shows))
           response['data'].append(venue)
-  
+
   response['count'] = len(response['data'])
 
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
@@ -142,7 +151,7 @@ def show_venue(venue_id):
   # query all shows played in the venue using venue_id
   shows = Show.query.filter_by(venue_id=venue_id).all()
 
-  # map content in an object data 
+  # map content in an object data
   data = {
       "id": venue.id,
       "name": venue.name,
@@ -166,21 +175,43 @@ def show_venue(venue_id):
 #  Create Venue
 #  ----------------------------------------------------------------
 
+
 @app.route('/venues/create', methods=['GET'])
 def create_venue_form():
   form = VenueForm()
   return render_template('forms/new_venue.html', form=form)
 
+
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
+  try:
+    form = VenueForm()
+    venue = Venue(
+        name=form.name.data,
+        city=form.city.data,
+        state=form.state.data,
+        address=form.address.data,
+        phone=form.phone.data,
+        genres_list=form.genres_list.data,
+        facebook_link=form.facebook_link.data,
+        website_url=form.website_url.data,
+        image_link=form.image_link.data,
+        seeking_talent=form.seeking_talent.data,
+        seeking_description=form.seeking_description.data,
+    )
+    db.session.add(venue)
+    db.session.commit()
 
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+    flash('Venue ' + venue.name + ' was successfully listed!')
+    return render_template('pages/home.html')
+  except Exception as e:
+    print(e)
+    flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed.')
+    db.session.rollback()
+    return render_template('pages/home.html')
+  finally:
+    db.session.close()
+      
   return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
