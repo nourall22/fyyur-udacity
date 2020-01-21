@@ -14,11 +14,15 @@ from flask_wtf import Form
 from flask_migrate import Migrate
 from forms import *
 from config import *
+from flask_cors import CORS
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='/static')
+CORS(app)
+
 moment = Moment(app)
 app.config.from_object('config')
 app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
